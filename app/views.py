@@ -1,7 +1,10 @@
-from urllib.request import Request
+from django.http import HttpRequest
+from django.shortcuts import render
+from django.views import View
 
-from django.http import HttpResponse
 
+class HomeView(View):
 
-def home(request: Request):
-    return HttpResponse(content='This is the home page!')
+    def get(self, request: HttpRequest, *args, **kwargs):
+        context = {'page_title': 'Home page'}
+        return render(request=request, template_name='app/home.html', context=context)
