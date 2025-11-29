@@ -14,17 +14,17 @@
                 <input type="button" value="Admin page" onclick="location.href='/admin/'" />
             {% endif %}
             {% if request.user.is_authenticated %}
-                <form action="{% url "logout" %}" method="post" style="display: inline">
+                <form action="{% url "auth_logout" %}" method="post" style="display: inline">
                     {% csrf_token %}
-                    <input type="submit" value="Logout: {{ request.user.username }}" onclick="location.href='{% url "logout" %}'" />
+                    <input type="submit" value="Logout: {{ request.user.username }}" onclick="location.href='{% url "auth_logout" %}'" />
                 </form>
             {% else %}
-                <input type="button" value="Register" onclick="location.href='{% url "register" %}'" />
-                <input type="button" value="Login" onclick="location.href='{% url "login" %}'" />
+                <input type="button" value="Register" onclick="location.href='{% url "auth_register" %}'" />
+                <input type="button" value="Login" onclick="location.href='{% url "auth_login" %}'" />
             {% endif %}
-            <input type="button" value="Home" onclick="location.href='{% url "home" %}'" />
-            <input type="button" value="Your boards" onclick="location.href='{% url "boards" %}'" />
-            <input type="button" value="Create new board" onclick="location.href='{% url "board_new" %}'" />
+            <input type="button" value="Home" onclick="location.href='{% url "app_home" %}'" />
+            <input type="button" value="Your boards" onclick="location.href='{% url "board_list" %}'" />
+            <input type="button" value="Create new board" onclick="location.href='{% url "board_create" %}'" />
         </header>
         {% comment %} CONTENT {% endcomment %}
         {% block content %}

@@ -1,0 +1,10 @@
+{% extends "template.html" %}
+{% block content %}
+    <h1>This is the page where all boards are displayed!</h1>
+    {% for board in boards %}
+        <div>
+            <input type="button" value="open" onclick="location.href='{% url "board_list" %}{{ board.pk }}'" />
+            <p style="display: inline;">Title: {{ board.title }}, Owner: {{ board.owner.username }}</p>
+        </div>
+    {% endfor %}
+{% endblock content %}

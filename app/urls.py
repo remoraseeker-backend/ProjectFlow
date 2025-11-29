@@ -7,6 +7,6 @@ urlpatterns = [
     path(
         route='',
         view=HomeView.as_view(template_name='app/home.html', extra_context={'page_title': 'Home'}),
-        name='home',
+        name='app_home',
     ),
 ]

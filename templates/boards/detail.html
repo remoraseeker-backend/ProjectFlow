@@ -1,0 +1,7 @@
+{% extends "template.html" %}
+{% block content %}
+    <h1>This is the page of board detail!</h1>
+    <p>Title: {{ board.title }}, Owner: {{ board.owner.username }}</p>
+    <p>Members:</p>
+    {% for member in board.members.all %}<p>{{ member.username }}</p>{% endfor %}
+{% endblock content %}
