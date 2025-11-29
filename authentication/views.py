@@ -4,21 +4,19 @@ from django.http import HttpRequest
 from django.http import HttpResponseRedirect
 from django.shortcuts import render
 from django.urls import reverse
-from django.views import View
 
+from app.views import AppBaseView
 from authentication.forms import RegisterForm
 from authentication.models import User
 
 
-class RegisterView(View):
-    template_name = 'authentication/register.html'
-    context = {
-        'page_title': 'Registration',
-        'form': RegisterForm,
-    }
-
+class RegisterView(AppBaseView):
     def get(self, request: HttpRequest, *args, **kwargs):
-        return render(request=request, template_name=self.template_name, context=self.context)
+        return render(
+            request=request,
+            template_name=self.template_name,
+            context=self.get_context({'form': RegisterForm}),
+        )
 
     def post(self, request: HttpRequest, *args, **kwargs):
         form = RegisterForm(data=request.POST)
@@ -27,14 +25,19 @@ class RegisterView(View):
 
         username = form.cleaned_data['username']
         password = form.cleaned_data['password']
+
         user = User.objects.filter(username=username).first()
         if user is None:
             user = User.objects.create_user(username=username, password=password)
             login(request=request, user=user)
             return HttpResponseRedirect(redirect_to=self.get_redirect_url())
+
         form.add_error(field=None, error='Incorrect username or password')
-        self.context['form'] = form
-        return render(request=request, template_name=self.template_name, context=self.context)
+        return render(
+            request=request,
+            template_name=self.template_name,
+            context=self.get_context({'form': form}),
+        )
 
     def get_redirect_url(self) -> str:
         url = getattr(settings, 'REGISTER_REDIRECT_URL', reverse(viewname='home'))
