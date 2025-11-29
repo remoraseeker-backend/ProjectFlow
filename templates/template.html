@@ -10,12 +10,16 @@
     <body>
         {% comment %} HEADER {% endcomment %}
         <header>
+            {% if request.user.is_superuser %}
+                <input type="button" value="admin page" onclick="location.href='/admin/'" />
+            {% endif %}
             {% if request.user.is_authenticated %}
                 <form action="{% url "logout" %}" method="post" style="display: inline">
                     {% csrf_token %}
                     <input type="submit" value="logout" onclick="location.href='{% url "logout" %}'" />
                 </form>
             {% else %}
+                <input type="button" value="register" onclick="location.href='{% url "register" %}'" />
                 <input type="button" value="login" onclick="location.href='{% url "login" %}'" />
             {% endif %}
             <input type="button" value="home" onclick="location.href='{% url "home" %}'" />

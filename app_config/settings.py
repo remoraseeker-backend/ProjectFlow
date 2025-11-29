@@ -4,6 +4,8 @@ from pathlib import Path
 AUTH_USER_MODEL = 'authentication.User'
 LOGIN_REDIRECT_URL = '/'
 LOGOUT_REDIRECT_URL = '/'
+# Custom parameter used in the RegisterView - the url when user is redirected after success registration.
+REGISTER_REDIRECT_URL = '/boards'
 
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
