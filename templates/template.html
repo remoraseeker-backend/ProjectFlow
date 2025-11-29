@@ -2,28 +2,25 @@
 <html lang="en">
     <head>
         <meta charset="UTF-8" />
-        <meta name="description" content="">
-        <meta name="keywords" content="">
+        <meta name="description" content="" />
+        <meta name="keywords" content="" />
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
         <title>{{ page_title }}</title>
     </head>
     <body>
         {% comment %} HEADER {% endcomment %}
-        <input type="button"
-               value="secret"
-               onclick="location.href='{% url "secret" %}'">
-        {% if request.user.is_authenticated %}
-            <form action="{% url "logout" %}" method="post" style="display: inline;">
-                {% csrf_token %}
-                <input type="submit"
-                       value="logout"
-                       onclick="location.href='{% url "logout" %}'">
-            </form>
-        {% else %}
-            <input type="button"
-                   value="login"
-                   onclick="location.href='{% url "login" %}'">
-        {% endif %}
+        <header>
+            {% if request.user.is_authenticated %}
+                <form action="{% url "logout" %}" method="post" style="display: inline">
+                    {% csrf_token %}
+                    <input type="submit" value="logout" onclick="location.href='{% url "logout" %}'" />
+                </form>
+            {% else %}
+                <input type="button" value="login" onclick="location.href='{% url "login" %}'" />
+            {% endif %}
+            <input type="button" value="home" onclick="location.href='{% url "home" %}'" />
+            <input type="button" value="boards" onclick="location.href='{% url "boards" %}'" />
+        </header>
         {% comment %} CONTENT {% endcomment %}
         {% block content %}
         {% endblock content %}
