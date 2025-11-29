@@ -15,7 +15,7 @@ class BoardsView(LoginRequiredMixin, AppBaseView):
         if not request.user.is_superuser:
             filters.update({'members': request.user})
 
-        boards = Board.objects.filter(**filters)
+        boards = Board.objects.filter(**filters).prefetch_related('owners')
         return render(
             request=request,
             template_name=self.template_name,

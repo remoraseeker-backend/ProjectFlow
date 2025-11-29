@@ -6,6 +6,26 @@ LOGIN_REDIRECT_URL = '/'
 LOGOUT_REDIRECT_URL = '/'
 # Custom parameter used in the RegisterView - the url when user is redirected after success registration.
 REGISTER_REDIRECT_URL = '/boards'
+# Required for debugging the SQL queries.
+INTERNAL_IPS = [
+    'localhost',
+]
+# Required for debugging the SQL queries.
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    'handlers': {
+        'console': {
+            'class': 'logging.StreamHandler',
+        },
+    },
+    'loggers': {
+        'django.db.backends': {
+            'level': 'DEBUG',  # The DEBUG level show all queries.
+            'handlers': ['console'],
+        }
+    }
+}
 
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
@@ -29,6 +49,7 @@ ALLOWED_HOSTS = []
 INSTALLED_APPS = [
     'boards.apps.BoardsConfig',
     'authentication.apps.AuthenticationConfig',
+    'debug_toolbar',  # Required for debugging the SQL queries.
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
@@ -38,6 +59,7 @@ INSTALLED_APPS = [
 ]
 
 MIDDLEWARE = [
+    'debug_toolbar.middleware.DebugToolbarMiddleware',  # Required for debugging the SQL queries.
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
