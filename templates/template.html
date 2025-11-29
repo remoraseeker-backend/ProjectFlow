@@ -8,6 +8,23 @@
         <title>{{ page_title }}</title>
     </head>
     <body>
+        {% comment %} HEADER {% endcomment %}
+        <input type="button"
+               value="secret"
+               onclick="location.href='{% url "secret" %}'">
+        {% if request.user.is_authenticated %}
+            <form action="{% url "logout" %}" method="post" style="display: inline;">
+                {% csrf_token %}
+                <input type="submit"
+                       value="logout"
+                       onclick="location.href='{% url "logout" %}'">
+            </form>
+        {% else %}
+            <input type="button"
+                   value="login"
+                   onclick="location.href='{% url "login" %}'">
+        {% endif %}
+        {% comment %} CONTENT {% endcomment %}
         {% block content %}
         {% endblock content %}
     </body>

@@ -1,7 +1,9 @@
 from pathlib import Path
 
 
-AUTH_USER_MODEL = 'app.User'
+AUTH_USER_MODEL = 'authentication.User'
+LOGIN_REDIRECT_URL = '/'
+LOGOUT_REDIRECT_URL = '/'
 
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
@@ -23,7 +25,7 @@ ALLOWED_HOSTS = []
 # Application definition
 
 INSTALLED_APPS = [
-    'app.apps.AppConfig',
+    'authentication.apps.AuthenticationConfig',
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
