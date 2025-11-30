@@ -1,0 +1,9 @@
+{% extends "template.html" %}
+{% block content %}
+    <p>Are you sure you want to delete the board "{{ board.title }}"? This action is irreversible.</p>
+    <form action="{{ form_action_url }}" method="post">
+        {% csrf_token %}
+        <input type="submit" value="Yes delete" />
+    </form>
+    <input type="button" value="Don`t delete" onclick="location.href='{% url "board_list" %}'" />
+{% endblock content %}

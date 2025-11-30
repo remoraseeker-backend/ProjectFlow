@@ -6,8 +6,10 @@
             <input type="button" value="open" onclick="location.href='{% url "board_list" %}{{ board.pk }}'" />
             {% if board.owner.pk == request.user.pk or request.user.is_superuser %}
                 <input type="button" value="edit" onclick="location.href='{% url "board_list" %}{{ board.pk }}/update/'" />
+                <input type="button" value="delete" onclick="location.href='{% url "board_list" %}{{ board.pk }}/delete/'" />
             {% else %}
                 <input disabled type="button" value="edit" onclick="location.href='{% url "board_list" %}{{ board.pk }}/update/'" />
+                <input disabled type="button" value="delete" onclick="location.href='{% url "board_list" %}{{ board.pk }}/delete/'" />
             {% endif %}
             <p style="display: inline;">
                 Title: {{ board.title }}, Members:
