@@ -26,3 +26,7 @@ class BoardCreateForm(forms.ModelForm):
         if not isinstance(members_field, forms.ModelMultipleChoiceField):
             raise TypeError()
         members_field.queryset = User.objects.all()
+
+
+class BoardUpdateForm(BoardCreateForm):
+    pass

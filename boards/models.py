@@ -18,3 +18,6 @@ class Board(models.Model):
         blank=False,
         related_name='member_of_boards',
     )
+
+    def __str__(self) -> str:
+        return self.title

@@ -4,6 +4,11 @@
     {% for board in boards %}
         <div>
             <input type="button" value="open" onclick="location.href='{% url "board_list" %}{{ board.pk }}'" />
+            {% if board.owner.pk == request.user.pk or request.user.is_superuser %}
+                <input type="button" value="edit" onclick="location.href='{% url "board_list" %}{{ board.pk }}/update/'" />
+            {% else %}
+                <input disabled type="button" value="edit" onclick="location.href='{% url "board_list" %}{{ board.pk }}/update/'" />
+            {% endif %}
             <p style="display: inline;">
                 Title: {{ board.title }}, Members:
                 {% for member in board.members.all %}{{ member.username }},{% endfor %}
