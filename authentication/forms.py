@@ -1,13 +1,21 @@
 from django import forms
 
+from authentication.models import User
 
-class RegisterForm(forms.Form):
+
+class RegisterForm(forms.ModelForm):
     username = forms.CharField(
         label='Username',
-        min_length=1,
+        required=True,
+        min_length=4,
     )
     password = forms.CharField(
         label='Password',
-        min_length=1,
+        required=True,
+        min_length=4,
         widget=forms.PasswordInput(),
     )
+
+    class Meta:
+        model = User
+        fields = ['username', 'password']

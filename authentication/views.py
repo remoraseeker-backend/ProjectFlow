@@ -1,44 +1,24 @@
 from django.conf import settings
 from django.contrib.auth import login
-from django.http import HttpRequest
-from django.http import HttpResponseRedirect
-from django.shortcuts import render
-from django.urls import reverse
+from django.forms import BaseModelForm
+from django.http import HttpResponse
+from django.urls import reverse_lazy
+from django.views.generic import CreateView
 
-from app.views import AppBaseView
 from authentication.forms import RegisterForm
 from authentication.models import User
 
 
-class RegisterView(AppBaseView):
-    def get(self, request: HttpRequest, *args, **kwargs):
-        return render(
-            request=request,
-            template_name=self.template_name,
-            context=self.get_context({'form': RegisterForm}),
-        )
+class RegisterView(CreateView):
+    model = User
+    form_class = RegisterForm
+    template_name = 'authentication/register.html'
+    extra_context = {'page_title': 'Register'}
 
-    def post(self, request: HttpRequest, *args, **kwargs):
-        form = RegisterForm(data=request.POST)
-        if not form.is_valid():
-            return HttpResponseRedirect(redirect_to=reverse(viewname='register'))
+    def form_valid(self, form: BaseModelForm) -> HttpResponse:
+        user = form.save()
+        login(request=self.request, user=user)
+        return super().form_valid(form)
 
-        username = form.cleaned_data['username']
-        password = form.cleaned_data['password']
-
-        user = User.objects.filter(username=username).first()
-        if user is None:
-            user = User.objects.create_user(username=username, password=password)
-            login(request=request, user=user)
-            return HttpResponseRedirect(redirect_to=self.get_redirect_url())
-
-        form.add_error(field=None, error='Incorrect username or password')
-        return render(
-            request=request,
-            template_name=self.template_name,
-            context=self.get_context({'form': form}),
-        )
-
-    def get_redirect_url(self) -> str:
-        url = getattr(settings, 'REGISTER_REDIRECT_URL', reverse(viewname='home'))
-        return url
+    def get_success_url(self) -> str:
+        return getattr(settings, 'REGISTER_REDIRECT_URL', reverse_lazy(viewname='app_home'))

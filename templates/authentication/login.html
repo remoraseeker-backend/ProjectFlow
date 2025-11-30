@@ -8,6 +8,9 @@
             {{ field }}
         {% endfor %}
         <input type="submit" value="login" />
-        {% for error in form.errors.values %}<p>{{ error }}</p>{% endfor %}
+        {% for field, errors in form.errors.items %}
+            {% if field != "__all__" %}<p>{{ field }}:</p>{% endif %}
+            <p>{{ errors }}</p>
+        {% endfor %}
     </form>
 {% endblock content %}

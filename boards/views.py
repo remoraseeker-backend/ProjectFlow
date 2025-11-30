@@ -1,63 +1,60 @@
 from django.contrib.auth.mixins import LoginRequiredMixin
-from django.http import HttpRequest
-from django.http import HttpResponseNotFound
-from django.http import HttpResponseRedirect
-from django.shortcuts import render
-from django.urls import reverse
+from django.db.models import Q
+from django.db.models.query import QuerySet
+from django.forms import BaseModelForm
+from django.http import HttpResponse
+from django.shortcuts import get_object_or_404
+from django.urls import reverse_lazy
+from django.views.generic import CreateView
+from django.views.generic import DetailView
+from django.views.generic import ListView
 
-from app.views import AppBaseView
 from boards.forms import BoardCreateForm
 from boards.models import Board
 
 
-class BoardDetailView(LoginRequiredMixin, AppBaseView):
-    def get(self, request: HttpRequest, *args, **kwargs):
-        filters = {'pk': kwargs.get('board_pk')}
-        if not request.user.is_superuser:
-            filters.update({'members': request.user})
+class BoardDetailView(LoginRequiredMixin, DetailView):
+    model = Board
+    context_object_name = 'board'
+    pk_url_kwarg = 'board_pk'
+    template_name = 'boards/detail.html'
+    extra_context = {'page_title': 'Board detail'}
 
-        board = Board.objects.filter(**filters).prefetch_related('members').first()
-        if board is None:
-            return HttpResponseNotFound(f'<h1>The board with id: {filters["pk"]} not found.</h1>')
+    def get_object(self, queryset=None) -> Board:
+        user = self.request.user
+        board_pk = self.kwargs['board_pk']
+        queryset = self.get_queryset() if queryset is None else queryset
 
-        return render(
-            request=request,
-            template_name=self.template_name,
-            context=self.get_context({'board': board}),
-        )
-
-
-class BoardListView(LoginRequiredMixin, AppBaseView):
-    def get(self, request: HttpRequest, *args, **kwargs):
-        filters = {}
-        if not request.user.is_superuser:
-            filters.update({'members': request.user})
-
-        boards = Board.objects.filter(**filters).prefetch_related('owner')
-        return render(
-            request=request,
-            template_name=self.template_name,
-            context=self.get_context({'boards': boards}),
-        )
+        if user.is_superuser:
+            return get_object_or_404(queryset, pk=board_pk)
+        else:
+            return get_object_or_404(queryset, Q(owner=user) | Q(members=user), pk=board_pk)
 
 
-class BoardCreateView(LoginRequiredMixin, AppBaseView):
-    def get(self, request: HttpRequest, *args, **kwargs):
-        return render(
-            request=request,
-            template_name=self.template_name,
-            context=self.get_context({'form': BoardCreateForm}),
-        )
+class BoardListView(LoginRequiredMixin, ListView):
+    model = Board
+    context_object_name = 'boards'
+    template_name = 'boards/list.html'
+    extra_context = {'page_title': 'Boards'}
 
-    def post(self, request: HttpRequest, *args, **kwargs):
-        form = BoardCreateForm(data=request.POST)
-        if not form.is_valid():
-            return HttpResponseRedirect(redirect_to=reverse(viewname='board_new'))
+    def get_queryset(self) -> QuerySet[Board]:
+        user = self.request.user
 
-        user = request.user
-        title = form.cleaned_data['title']
-        board = Board(title=title, owner=user)
-        board.save()
-        board.members.add(user)
+        if user.is_superuser:
+            return Board.objects.all().prefetch_related('owner', 'members')
+        else:
+            return Board.objects.filter(Q(owner=user) | Q(members=user)).distinct().prefetch_related('owner', 'members')
 
-        return HttpResponseRedirect(redirect_to=reverse(viewname='board_detail', kwargs={'board_pk': board.pk}))
+
+class BoardCreateView(LoginRequiredMixin, CreateView):
+    model = Board
+    form_class = BoardCreateForm
+    template_name = 'boards/create.html'
+    extra_context = {'page_title': 'Create board'}
+
+    def form_valid(self, form: BaseModelForm) -> HttpResponse:
+        form.instance.owner = self.request.user
+        return super().form_valid(form)
+
+    def get_success_url(self) -> str:
+        return reverse_lazy('board_detail', kwargs={'board_pk': self.object.pk})
