@@ -16,8 +16,8 @@ class RegisterView(CreateView):
     extra_context = {'page_title': 'Register'}
 
     def form_valid(self, form: BaseModelForm) -> HttpResponse:
-        user = form.save()
-        login(request=self.request, user=user)
+        form.instance = User.objects.create_user(**form.cleaned_data)
+        login(request=self.request, user=form.instance)
         return super().form_valid(form)
 
     def get_success_url(self) -> str:
