@@ -1,0 +1,19 @@
+{% extends "template.html" %}
+{% block content %}
+    <p>Title: {{ project.title }}</p>
+    <p>Owner: {{ project.owner.username }}</p>
+    {% if project.members.all %}
+        <p>Members:</p>
+        <ul>
+            {% for member in project.members.all %}<li>{{ member.username }}</li>{% endfor %}
+        </ul>
+    {% else %}
+        <p>Members: No members.</p>
+    {% endif %}
+    {% if can_edit %}
+        <input type="button" value="edit" onclick="location.href='{% url "project_update" project_pk=project.pk %} '" />
+    {% endif %}
+    {% if can_delete %}
+        <input type="button" value="delete" onclick="location.href='{% url "project_delete" project_pk=project.pk %}'" />
+    {% endif %}
+{% endblock content %}

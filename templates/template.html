@@ -29,8 +29,7 @@
                 <input type="button" value="Login" onclick="location.href='{% url "auth_login" %}'" />
             {% endif %}
             <input type="button" value="Home" onclick="location.href='{% url "app_home" %}'" />
-            <input type="button" value="Your boards" onclick="location.href='{% url "board_list" %}'" />
-            <input type="button" value="Create new board" onclick="location.href='{% url "board_create" %}'" />
+            <input type="button" value="Projects" onclick="location.href='{% url "project_list" %}'" />
         </header>
         {% comment %} CONTENT {% endcomment %}
         {% block content %}

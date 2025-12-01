@@ -5,7 +5,7 @@ AUTH_USER_MODEL = 'authentication.User'
 LOGIN_REDIRECT_URL = '/'
 LOGOUT_REDIRECT_URL = '/'
 # Custom parameter used in the RegisterView - the url when user is redirected after success registration.
-REGISTER_REDIRECT_URL = '/boards'
+REGISTER_REDIRECT_URL = '/'
 # Required for debugging the SQL queries.
 INTERNAL_IPS = [
     'localhost',
@@ -49,7 +49,7 @@ ALLOWED_HOSTS = [
 # Application definition
 
 INSTALLED_APPS = [
-    'boards.apps.BoardsConfig',
+    'projects.apps.ProjectsConfig',
     'authentication.apps.AuthenticationConfig',
     'debug_toolbar',  # Required for debugging the SQL queries.
     'django.contrib.admin',

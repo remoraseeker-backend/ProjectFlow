@@ -3,7 +3,7 @@ from django.db import models
 from authentication.models import User
 
 
-class Board(models.Model):
+class Project(models.Model):
     title = models.CharField(
         blank=False,
     )
@@ -11,12 +11,12 @@ class Board(models.Model):
         to=User,
         on_delete=models.CASCADE,
         blank=False,
-        related_name='owner_of_boards',
+        related_name='owner_of_projects',
     )
     members = models.ManyToManyField(
         to=User,
-        blank=False,
-        related_name='member_of_boards',
+        blank=True,
+        related_name='member_of_projects',
     )
 
     def __str__(self) -> str:

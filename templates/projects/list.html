@@ -1,0 +1,34 @@
+{% extends "template.html" %}
+{% block content %}
+    <p>
+        My projects:
+        <input type="button" value="+" onclick="location.href='{% url "project_create" %}'" />
+    </p>
+    <ul>
+        {% for project in projects.my %}
+            <li>
+                <a href="{% url "project_detail" project_pk=project.pk %}">{{ project.title }}</a>
+            </li>
+        {% endfor %}
+    </ul>
+    <hr />
+    <p>Member of projects:</p>
+    <ul>
+        {% for project in projects.member %}
+            <li>
+                <a href="{% url "project_detail" project_pk=project.pk %}">{{ project.title }}</a>
+            </li>
+        {% endfor %}
+    </ul>
+    {% if request.user.is_superuser %}
+        <hr />
+        <p>Admin list:</p>
+        <ul>
+            {% for project in projects.admin_list %}
+                <li>
+                    <a href="{% url "project_detail" project_pk=project.pk %}">{{ project.title }}</a>
+                </li>
+            {% endfor %}
+        </ul>
+    {% endif %}
+{% endblock content %}

@@ -1,8 +1,8 @@
 from django.contrib import admin
 
-from boards.models import Board
+from projects.models import Project
 
 
 admin.site.register([
-    Board,
+    Project,
 ])

@@ -1,10 +1,10 @@
 from django import forms
 
 from authentication.models import User
-from boards.models import Board
+from projects.models import Project
 
 
-class BoardCreateForm(forms.ModelForm):
+class ProjectCreateForm(forms.ModelForm):
     title = forms.CharField(
         label='Title',
         required=True,
@@ -17,7 +17,7 @@ class BoardCreateForm(forms.ModelForm):
     )
 
     class Meta:
-        model = Board
+        model = Project
         fields = ['title', 'members']
 
     def __init__(self, *args, **kwargs):
@@ -28,5 +28,5 @@ class BoardCreateForm(forms.ModelForm):
         members_field.queryset = User.objects.all()
 
 
-class BoardUpdateForm(BoardCreateForm):
+class ProjectUpdateForm(ProjectCreateForm):
     pass
