@@ -49,6 +49,7 @@ ALLOWED_HOSTS = [
 # Application definition
 
 INSTALLED_APPS = [
+    'sections.apps.SectionsConfig',
     'projects.apps.ProjectsConfig',
     'authentication.apps.AuthenticationConfig',
     'debug_toolbar',  # Required for debugging the SQL queries.

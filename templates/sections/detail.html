@@ -1,0 +1,15 @@
+{% extends "template.html" %}
+{% block content %}
+    <p>
+        Section of project: <a href="{% url "project_detail" project_pk=section.project.pk %}">{{ section.project.title }}</a>
+    </p>
+    <p>Name: {{ section.name }}</p>
+    {% if user_is_project_owner_or_superuser %}
+        <input type="button"
+               value="edit"
+               onclick="location.href='{% url "section_update" project_pk=section.project.pk section_pk=section.pk %} '" />
+        <input type="button"
+               value="delete"
+               onclick="location.href='{% url "section_delete" project_pk=section.project.pk section_pk=section.pk %}'" />
+    {% endif %}
+{% endblock content %}

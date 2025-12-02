@@ -10,10 +10,21 @@
     {% else %}
         <p>Members: No members.</p>
     {% endif %}
-    {% if can_edit %}
+    <p>
+        Sections:
+        {% if user_is_project_owner_or_superuser %}
+            <input type="button" value="+" onclick="location.href='{% url "section_create" project_pk=project.pk %} '" />
+        {% endif %}
+    </p>
+    <ul>
+        {% for section in project.sections.all %}
+            <li>
+                <a href="{% url "section_detail" project_pk=project.pk section_pk=section.pk %}">{{ section.name }}</a>
+            </li>
+        {% endfor %}
+    </ul>
+    {% if user_is_project_owner_or_superuser %}
         <input type="button" value="edit" onclick="location.href='{% url "project_update" project_pk=project.pk %} '" />
-    {% endif %}
-    {% if can_delete %}
         <input type="button" value="delete" onclick="location.href='{% url "project_delete" project_pk=project.pk %}'" />
     {% endif %}
 {% endblock content %}

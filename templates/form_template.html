@@ -1,12 +1,8 @@
-<form action="{{ form_action_url }}" method="post">
+<hr />
+<form method="post">
     {% csrf_token %}
-    {% for field in form %}
-        <div>
-            {{ field.label }}
-            {{ field }}
-        </div>
-        <hr />
-    {% endfor %}
+    {% for field in form %}<div>{{ field.label }}: {{ field }}</div>{% endfor %}
+    <hr />
     <input type="submit" value="Save" />
     {% for field, errors in form.errors.items %}
         {% if field != "__all__" %}<p>{{ field }}:</p>{% endif %}

@@ -1,4 +1,5 @@
 from typing import Any
+from typing import cast
 
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.db.models import Q
@@ -13,66 +14,77 @@ from django.views.generic import DetailView
 from django.views.generic import ListView
 from django.views.generic import UpdateView
 
+from authentication.models import User
 from projects.forms import ProjectCreateForm
 from projects.forms import ProjectUpdateForm
 from projects.models import Project
 
 
-class ProjectListView(LoginRequiredMixin, ListView):
+class ProjectViewMixin(LoginRequiredMixin):
     model = Project
+
+    def get_queryset(self) -> QuerySet[Project]:
+        queryset = self.model.objects.all()
+        queryset = queryset.select_related('owner')
+        queryset = queryset.prefetch_related('members', 'sections')
+        return queryset.distinct()
+
+
+class ProjectListView(ProjectViewMixin, ListView):
     context_object_name = 'projects'
     template_name = 'projects/list.html'
     extra_context = {'page_title': 'Projects'}
 
     def get_queryset(self) -> QuerySet[Project]:
         user = self.request.user
+        queryset = super().get_queryset()
 
         if user.is_superuser:
-            boards = Project.objects.all().prefetch_related('owner', 'members')
+            return queryset
         else:
-            boards = Project.objects.filter(Q(owner=user) | Q(members=user)).distinct()
-
-        return boards.prefetch_related('owner', 'members')
+            return queryset.filter(Q(owner=user) | Q(members=user))
 
     def get_context_data(self, **kwargs) -> dict[str, Any]:
         context = super().get_context_data(**kwargs)
         user = self.request.user
-        projects = context['projects']
+        projects = cast(list[Project], self.object_list)  # pyright: ignore[reportAttributeAccessIssue]
+        context['projects'] = dict()
 
-        context['projects'] = {
-            'my': projects.filter(owner=user),
-            'member': projects.filter(Q(members=user) & ~Q(owner=user)),
-        }
+        # user is owner;
+        context['projects']['my'] = filter(lambda p: user == p.owner, projects)
+        # user is member and not owner;
+        context['projects']['member'] = filter(lambda p: user in p.members.all() and not p.owner == user, projects)
 
-        if user.is_superuser:
-            context['projects'].update({
-                'admin_list': projects.exclude(Q(owner=user) | Q(members=user))
-            })
+        if not user.is_superuser:
+            return context
+
+        # user is not member and is not owner;
+        context['projects']['admin_list'] = filter(lambda p: user != p.owner and user not in p.members.all(), projects)
 
         return context
 
 
-class ProjectCreateView(LoginRequiredMixin, CreateView):
-    model = Project
+class ProjectCreateView(ProjectViewMixin, CreateView):
     form_class = ProjectCreateForm
     template_name = 'projects/create.html'
 
     def form_valid(self, form: BaseModelForm) -> HttpResponse:
-        form.instance.owner = self.request.user
+        project = cast(Project, form.instance)
+        user = cast(User, self.request.user)
+        project.owner = user
         return super().form_valid(form)
 
     def get_context_data(self, **kwargs) -> dict[str, Any]:
         context = super().get_context_data(**kwargs)
         context['page_title'] = 'Create project'
-        context['form_action_url'] = reverse_lazy('project_create')
         return context
 
     def get_success_url(self) -> str:
-        return reverse_lazy('project_detail', kwargs={'project_pk': self.object.pk})  # type: ignore
+        project = cast(Project, self.object)  # pyright: ignore[reportAttributeAccessIssue]
+        return reverse_lazy('project_detail', kwargs={'project_pk': project.pk})
 
 
-class ProjectDetailView(LoginRequiredMixin, DetailView):
-    model = Project
+class ProjectDetailView(ProjectViewMixin, DetailView):
     context_object_name = 'project'
     pk_url_kwarg = 'project_pk'
     template_name = 'projects/detail.html'
@@ -80,7 +92,7 @@ class ProjectDetailView(LoginRequiredMixin, DetailView):
     def get_object(self, queryset=None) -> Project:
         user = self.request.user
         project_pk = self.kwargs[self.pk_url_kwarg]
-        queryset = (self.get_queryset() if queryset is None else queryset).distinct()
+        queryset = self.get_queryset() if queryset is None else queryset
 
         if user.is_superuser:
             return get_object_or_404(queryset, pk=project_pk)
@@ -88,17 +100,15 @@ class ProjectDetailView(LoginRequiredMixin, DetailView):
             return get_object_or_404(queryset, Q(owner=user) | Q(members=user), pk=project_pk)
 
     def get_context_data(self, **kwargs) -> dict[str, Any]:
-        context = super().get_context_data(**kwargs)
         user = self.request.user
-        project = context[self.context_object_name]
+        project = cast(Project, self.object)  # pyright: ignore[reportAttributeAccessIssue]
+        context = super().get_context_data(**kwargs)
         context['page_title'] = f'Detail of project: {project.title}'
-        context['can_edit'] = (project.owner == user) or user.is_superuser
-        context['can_delete'] = (project.owner == user) or user.is_superuser
+        context['user_is_project_owner_or_superuser'] = user.is_superuser or (project.owner == user)
         return context
 
 
-class ProjectUpdateView(LoginRequiredMixin, UpdateView):
-    model = Project
+class ProjectUpdateView(ProjectViewMixin, UpdateView):
     form_class = ProjectUpdateForm
     context_object_name = 'project'
     pk_url_kwarg = 'project_pk'
@@ -107,7 +117,7 @@ class ProjectUpdateView(LoginRequiredMixin, UpdateView):
     def get_object(self, queryset=None) -> Project:
         user = self.request.user
         project_pk = self.kwargs[self.pk_url_kwarg]
-        queryset = (self.get_queryset() if queryset is None else queryset).distinct()
+        queryset = self.get_queryset() if queryset is None else queryset
 
         if user.is_superuser:
             return get_object_or_404(queryset, pk=project_pk)
@@ -115,18 +125,17 @@ class ProjectUpdateView(LoginRequiredMixin, UpdateView):
             return get_object_or_404(queryset, pk=project_pk, owner=user)
 
     def get_context_data(self, **kwargs) -> dict[str, Any]:
+        project = cast(Project, self.object)  # pyright: ignore[reportAttributeAccessIssue]
         context = super().get_context_data(**kwargs)
-        project = context[self.context_object_name]
         context['page_title'] = f'Update project: {project.title}'
-        context['form_action_url'] = reverse_lazy('project_update', kwargs={'project_pk': project.pk})
         return context
 
     def get_success_url(self) -> str:
-        return reverse_lazy('project_detail', kwargs={'project_pk': self.object.pk})  # type: ignore
+        project = cast(Project, self.object)  # pyright: ignore[reportAttributeAccessIssue]
+        return reverse_lazy('project_detail', kwargs={'project_pk': project.pk})
 
 
-class ProjectDeleteView(LoginRequiredMixin, DeleteView):
-    model = Project
+class ProjectDeleteView(ProjectViewMixin, DeleteView):
     success_url = reverse_lazy('project_list')
     context_object_name = 'project'
     pk_url_kwarg = 'project_pk'
@@ -136,7 +145,7 @@ class ProjectDeleteView(LoginRequiredMixin, DeleteView):
     def get_object(self, queryset=None) -> Project:
         user = self.request.user
         project_pk = self.kwargs[self.pk_url_kwarg]
-        queryset = (self.get_queryset() if queryset is None else queryset).distinct()
+        queryset = self.get_queryset() if queryset is None else queryset
 
         if user.is_superuser:
             return get_object_or_404(queryset, pk=project_pk)
@@ -144,8 +153,7 @@ class ProjectDeleteView(LoginRequiredMixin, DeleteView):
             return get_object_or_404(queryset, pk=project_pk, owner=user)
 
     def get_context_data(self, **kwargs) -> dict[str, Any]:
+        project = cast(Project, self.object)  # pyright: ignore[reportAttributeAccessIssue]
         context = super().get_context_data(**kwargs)
-        project = context[self.context_object_name]
         context['page_title'] = f'Delete project: {project.title}'
-        context['form_action_url'] = reverse_lazy('project_delete', kwargs={'project_pk': project.pk})
         return context
