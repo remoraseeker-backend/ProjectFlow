@@ -6,8 +6,8 @@ from django.db.models import Q
 from django.db.models.query import QuerySet
 from django.forms import BaseModelForm
 from django.http import HttpResponse
-from django.shortcuts import get_object_or_404
 from django.urls import reverse_lazy
+from django.views import View
 from django.views.generic import CreateView
 from django.views.generic import DeleteView
 from django.views.generic import DetailView
@@ -20,7 +20,7 @@ from projects.forms import ProjectUpdateForm
 from projects.models import Project
 
 
-class ProjectViewMixin(LoginRequiredMixin):
+class ProjectViewMixin(LoginRequiredMixin, View):
     model = Project
     pk_url_kwarg = 'project_pk'
 
@@ -28,7 +28,20 @@ class ProjectViewMixin(LoginRequiredMixin):
         queryset = self.model.objects.all()
         queryset = queryset.select_related('owner')
         queryset = queryset.prefetch_related('members', 'sections')
-        return queryset.distinct()
+        queryset = queryset.distinct()
+        user = self.request.user
+
+        if isinstance(self, (ProjectListView, ProjectDetailView)):
+            filters = Q(owner=user) | Q(members=user)
+        elif isinstance(self, (ProjectUpdateView, ProjectDeleteView)):
+            filters = Q(owner=user)
+        else:
+            raise Exception()
+
+        if user.is_superuser:
+            return queryset
+        else:
+            return queryset.filter(filters)
 
 
 class ProjectListView(ProjectViewMixin, ListView):
@@ -36,15 +49,6 @@ class ProjectListView(ProjectViewMixin, ListView):
     context_object_name = 'projects'
     template_name = 'projects/list.html'
     extra_context = {'page_title': 'Projects'}
-
-    def get_queryset(self) -> QuerySet[Project]:
-        user = self.request.user
-        queryset = super().get_queryset()
-
-        if user.is_superuser:
-            return queryset
-        else:
-            return queryset.filter(Q(owner=user) | Q(members=user))
 
     def get_context_data(self, **kwargs) -> dict[str, Any]:
         context = super().get_context_data(**kwargs)
@@ -92,16 +96,6 @@ class ProjectDetailView(ProjectViewMixin, DetailView):
     context_object_name = 'project'
     template_name = 'projects/detail.html'
 
-    def get_object(self, queryset=None) -> Project:
-        user = self.request.user
-        project_pk = self.kwargs[self.pk_url_kwarg]
-        queryset = self.get_queryset() if queryset is None else queryset
-
-        if user.is_superuser:
-            return get_object_or_404(queryset, pk=project_pk)
-        else:
-            return get_object_or_404(queryset, Q(owner=user) | Q(members=user), pk=project_pk)
-
     def get_context_data(self, **kwargs) -> dict[str, Any]:
         user = self.request.user
         project = cast(Project, self.object)  # pyright: ignore[reportAttributeAccessIssue]
@@ -116,16 +110,6 @@ class ProjectUpdateView(ProjectViewMixin, UpdateView):
     form_class = ProjectUpdateForm
     context_object_name = 'project'
     template_name = 'projects/update.html'
-
-    def get_object(self, queryset=None) -> Project:
-        user = self.request.user
-        project_pk = self.kwargs[self.pk_url_kwarg]
-        queryset = self.get_queryset() if queryset is None else queryset
-
-        if user.is_superuser:
-            return get_object_or_404(queryset, pk=project_pk)
-        else:
-            return get_object_or_404(queryset, pk=project_pk, owner=user)
 
     def get_context_data(self, **kwargs) -> dict[str, Any]:
         project = cast(Project, self.object)  # pyright: ignore[reportAttributeAccessIssue]
@@ -143,16 +127,6 @@ class ProjectDeleteView(ProjectViewMixin, DeleteView):
     context_object_name = 'project'
     template_name = 'projects/delete.html'
     success_url = reverse_lazy('project_list')
-
-    def get_object(self, queryset=None) -> Project:
-        user = self.request.user
-        project_pk = self.kwargs[self.pk_url_kwarg]
-        queryset = self.get_queryset() if queryset is None else queryset
-
-        if user.is_superuser:
-            return get_object_or_404(queryset, pk=project_pk)
-        else:
-            return get_object_or_404(queryset, pk=project_pk, owner=user)
 
     def get_context_data(self, **kwargs) -> dict[str, Any]:
         project = cast(Project, self.object)  # pyright: ignore[reportAttributeAccessIssue]
