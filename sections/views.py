@@ -4,32 +4,48 @@ from typing import cast
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.db.models import Q
 from django.db.models import QuerySet
-from django.db.models.base import Model as Model
 from django.forms import BaseModelForm
+from django.http import Http404
 from django.http import HttpRequest
 from django.http import HttpResponse
-from django.shortcuts import get_object_or_404
 from django.urls import reverse_lazy
+from django.views import View
 from django.views.generic import CreateView
 from django.views.generic import DeleteView
 from django.views.generic import DetailView
 from django.views.generic import ListView
 from django.views.generic import UpdateView
 
+from projects.models import Project
+from projects.views import ProjectDetailView
 from projects.views import ProjectViewMixin
 from sections.forms import SectionCreateForm
 from sections.forms import SectionUpdateForm
 from sections.models import Section
 
 
-class SectionViewMixin(LoginRequiredMixin):
+class SectionViewMixin(LoginRequiredMixin, View):
     model = Section
     pk_url_kwarg = 'section_pk'
 
     def get_queryset(self) -> QuerySet[Section]:
         queryset = self.model.objects.all()
         queryset = queryset.select_related('project')
-        return queryset.distinct()
+        queryset = queryset.distinct()
+        user = self.request.user
+        project_pk = self.kwargs[ProjectViewMixin.pk_url_kwarg]
+
+        if isinstance(self, (SectionListView, SectionDetailView)):
+            filters = Q(project__owner=user) | Q(project__members=user)
+        elif isinstance(self, (SectionUpdateView, SectionDeleteView)):
+            filters = Q(project__owner=user)
+        else:
+            raise Exception()
+
+        if user.is_superuser:
+            return queryset
+        else:
+            return queryset.filter(filters, project__pk=project_pk)
 
 
 class SectionListView(SectionViewMixin, ListView):
@@ -38,18 +54,9 @@ class SectionListView(SectionViewMixin, ListView):
     template_name = 'sections/list.html'
 
     def dispatch(self, request: HttpRequest, *args, **kwargs) -> HttpResponse:
-        user = request.user
-        project_pk = kwargs[ProjectViewMixin.pk_url_kwarg]
-        project_qs = ProjectViewMixin().get_queryset()
-        if user.is_superuser:
-            self.project = get_object_or_404(project_qs, pk=project_pk)
-        else:
-            self.project = get_object_or_404(project_qs, Q(owner=user) | Q(members=user), pk=project_pk)
+        project = ProjectDetailView(request=request, kwargs=kwargs).get_object()
+        self.project = cast(Project, project)
         return super().dispatch(request, *args, **kwargs)
-
-    def get_queryset(self) -> QuerySet[Section]:
-        queryset = cast(QuerySet[Section], self.project.sections.all())  # pyright: ignore[reportAttributeAccessIssue]
-        return queryset
 
     def get_context_data(self, **kwargs) -> dict[str, Any]:
         context = super().get_context_data(**kwargs)
@@ -64,13 +71,14 @@ class SectionCreateView(SectionViewMixin, CreateView):
     template_name = 'sections/create.html'
 
     def dispatch(self, request: HttpRequest, *args, **kwargs) -> HttpResponse:
+        project = ProjectDetailView(request=request, kwargs=kwargs).get_object()
+        self.project = cast(Project, project)
+
+        # Raise 404 if user try to add the section into the project where he is not a owner.
         user = request.user
-        project_pk = kwargs[ProjectViewMixin.pk_url_kwarg]
-        project_qs = ProjectViewMixin().get_queryset()
-        if user.is_superuser:
-            self.project = get_object_or_404(project_qs, pk=project_pk)
-        else:
-            self.project = get_object_or_404(project_qs, pk=project_pk, owner=user)
+        if not user.is_superuser and self.project.owner != user:
+            raise Http404(f'No {self.project._meta.object_name} matches the given query.')
+
         return super().dispatch(request, *args, **kwargs)
 
     def form_valid(self, form: BaseModelForm) -> HttpResponse:
@@ -97,18 +105,6 @@ class SectionDetailView(SectionViewMixin, DetailView):
     context_object_name = 'section'
     template_name = 'sections/detail.html'
 
-    def get_object(self, queryset=None) -> Section:
-        user = self.request.user
-        project_pk = self.kwargs[ProjectViewMixin.pk_url_kwarg]
-        section_pk = self.kwargs[self.pk_url_kwarg]
-        queryset = self.get_queryset() if queryset is None else queryset
-        pk_filter = Q(pk=section_pk) & Q(project__pk=project_pk)
-
-        if user.is_superuser:
-            return get_object_or_404(queryset, pk_filter)
-        else:
-            return get_object_or_404(queryset, pk_filter, Q(project__owner=user) | Q(project__members=user))
-
     def get_context_data(self, **kwargs) -> dict[str, Any]:
         section = cast(Section, self.object)  # pyright: ignore[reportAttributeAccessIssue]
         context = super().get_context_data(**kwargs)
@@ -123,18 +119,6 @@ class SectionUpdateView(SectionViewMixin, UpdateView):
     form_class = SectionUpdateForm
     context_object_name = 'section'
     template_name = 'sections/update.html'
-
-    def get_object(self, queryset=None) -> Section:
-        queryset = self.get_queryset() if queryset is None else queryset
-        user = self.request.user
-        project_pk = self.kwargs[ProjectViewMixin.pk_url_kwarg]
-        section_pk = self.kwargs[self.pk_url_kwarg]
-        pk_filter = Q(pk=section_pk) & Q(project__pk=project_pk)
-
-        if user.is_superuser:
-            return get_object_or_404(queryset, pk_filter)
-        else:
-            return get_object_or_404(queryset, pk_filter, project__owner=user)
 
     def get_context_data(self, **kwargs) -> dict[str, Any]:
         section = cast(Section, self.object)  # pyright: ignore[reportAttributeAccessIssue]
@@ -155,18 +139,6 @@ class SectionDeleteView(SectionViewMixin, DeleteView):
     """User can delete section of project only if he is a owner of project or superuser."""
     context_object_name = 'section'
     template_name = 'sections/delete.html'
-
-    def get_object(self, queryset=None) -> Section:
-        queryset = self.get_queryset() if queryset is None else queryset
-        user = self.request.user
-        project_pk = self.kwargs[ProjectViewMixin.pk_url_kwarg]
-        section_pk = self.kwargs[self.pk_url_kwarg]
-        pk_filter = Q(pk=section_pk) & Q(project__pk=project_pk)
-
-        if user.is_superuser:
-            return get_object_or_404(queryset, pk_filter)
-        else:
-            return get_object_or_404(queryset, pk_filter, project__owner=user)
 
     def get_success_url(self) -> str:
         kwargs = {
