@@ -1,0 +1,9 @@
+{% extends "template.html" %}
+{% block content %}
+    <p>
+        Sections of project: <a href="{% url "project_detail" project_pk=project.pk %}">{{ project.title }}</a>
+    </p>
+    {% for section in sections %}
+        <a style="display: block;" href="{% url "section_detail" project_pk=project.pk section_pk=section.pk %}">{{ section.name }}</a>
+    {% endfor %}
+{% endblock content %}

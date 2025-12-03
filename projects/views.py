@@ -22,6 +22,7 @@ from projects.models import Project
 
 class ProjectViewMixin(LoginRequiredMixin):
     model = Project
+    pk_url_kwarg = 'project_pk'
 
     def get_queryset(self) -> QuerySet[Project]:
         queryset = self.model.objects.all()
@@ -31,6 +32,7 @@ class ProjectViewMixin(LoginRequiredMixin):
 
 
 class ProjectListView(ProjectViewMixin, ListView):
+    """User can get the list of projects where he is a member or owner, if user is superuser he can get all projects."""
     context_object_name = 'projects'
     template_name = 'projects/list.html'
     extra_context = {'page_title': 'Projects'}
@@ -65,6 +67,7 @@ class ProjectListView(ProjectViewMixin, ListView):
 
 
 class ProjectCreateView(ProjectViewMixin, CreateView):
+    """User can create new project if he is logged in."""
     form_class = ProjectCreateForm
     template_name = 'projects/create.html'
 
@@ -81,12 +84,12 @@ class ProjectCreateView(ProjectViewMixin, CreateView):
 
     def get_success_url(self) -> str:
         project = cast(Project, self.object)  # pyright: ignore[reportAttributeAccessIssue]
-        return reverse_lazy('project_detail', kwargs={'project_pk': project.pk})
+        return reverse_lazy('project_detail', kwargs={self.pk_url_kwarg: project.pk})
 
 
 class ProjectDetailView(ProjectViewMixin, DetailView):
+    """User can get the detail of the project only if he is a owner or member of project or superuser."""
     context_object_name = 'project'
-    pk_url_kwarg = 'project_pk'
     template_name = 'projects/detail.html'
 
     def get_object(self, queryset=None) -> Project:
@@ -109,9 +112,9 @@ class ProjectDetailView(ProjectViewMixin, DetailView):
 
 
 class ProjectUpdateView(ProjectViewMixin, UpdateView):
+    """User can update the project only if he is a owner of project or superuser."""
     form_class = ProjectUpdateForm
     context_object_name = 'project'
-    pk_url_kwarg = 'project_pk'
     template_name = 'projects/update.html'
 
     def get_object(self, queryset=None) -> Project:
@@ -132,13 +135,12 @@ class ProjectUpdateView(ProjectViewMixin, UpdateView):
 
     def get_success_url(self) -> str:
         project = cast(Project, self.object)  # pyright: ignore[reportAttributeAccessIssue]
-        return reverse_lazy('project_detail', kwargs={'project_pk': project.pk})
+        return reverse_lazy('project_detail', kwargs={self.pk_url_kwarg: project.pk})
 
 
 class ProjectDeleteView(ProjectViewMixin, DeleteView):
-    success_url = reverse_lazy('project_list')
+    """User can delete the project only if he is a owner of project or superuser."""
     context_object_name = 'project'
-    pk_url_kwarg = 'project_pk'
     template_name = 'projects/delete.html'
     success_url = reverse_lazy('project_list')
 

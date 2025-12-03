@@ -11,7 +11,7 @@
         <p>Members: No members.</p>
     {% endif %}
     <p>
-        Sections:
+        <a href="{% url "section_list" project_pk=project.pk %}">Sections:</a>
         {% if user_is_project_owner_or_superuser %}
             <input type="button" value="+" onclick="location.href='{% url "section_create" project_pk=project.pk %} '" />
         {% endif %}

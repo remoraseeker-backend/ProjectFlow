@@ -1,0 +1,9 @@
+{% extends "template.html" %}
+{% block content %}
+    <p>Are you sure you want to delete the section "{{ section.name }}"? This action is irreversible.</p>
+    <form method="post">
+        {% csrf_token %}
+        <input type="submit" value="Yes delete" />
+    </form>
+    <input type="button" value="Don`t delete" onclick="location.href='{% url "section_list" project_pk=section.project.pk %}'" />
+{% endblock content %}
