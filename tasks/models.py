@@ -27,21 +27,25 @@ class Task(models.Model):
     title = models.CharField(
         blank=False,
         null=False,
+        verbose_name='Title',
     )
     description = models.TextField(
         blank=False,
         null=False,
+        verbose_name='Description',
     )
     priority = models.IntegerField(
         blank=False,
         null=False,
         choices=TaskPriority.choices,
+        verbose_name='Priority',
     )
     status = models.CharField(
         blank=True,
         null=False,
         default=TaskStatus.TO_DO,
         choices=TaskStatus.choices,
+        verbose_name='Status',
     )
     executor = models.ForeignKey(
         blank=True,
@@ -49,6 +53,7 @@ class Task(models.Model):
         to=User,
         on_delete=models.SET_NULL,
         related_name='executor_of_tasks',
+        verbose_name='Executor',
     )
     creator = models.ForeignKey(
         blank=False,
@@ -56,6 +61,7 @@ class Task(models.Model):
         to=User,
         on_delete=models.CASCADE,
         related_name='creator_of_tasks',
+        verbose_name='Creator',
     )
     deadline = models.DateTimeField(
         blank=True,
@@ -63,6 +69,7 @@ class Task(models.Model):
         validators=(
             deadline_cant_be_in_past_validator,
         )
+        verbose_name='Deadline',
     )
 
     def __str__(self) -> str:

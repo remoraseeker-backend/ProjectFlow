@@ -1,3 +1,4 @@
+from django.urls import include
 from django.urls import path
 
 from sections.views import SectionCreateView
@@ -11,6 +12,7 @@ urlpatterns = [
     path(route='', view=SectionListView.as_view(), name='section_list'),
     path(route='create/', view=SectionCreateView.as_view(), name='section_create'),
     path(route='<int:section_pk>/', view=SectionDetailView.as_view(), name='section_detail'),
+    path(route='<int:section_pk>/tasks/', view=include('tasks.urls')),
     path(route='<int:section_pk>/update/', view=SectionUpdateView.as_view(), name='section_update'),
     path(route='<int:section_pk>/delete/', view=SectionDeleteView.as_view(), name='section_delete'),
 ]

@@ -7,6 +7,7 @@ class Section(models.Model):
     name = models.CharField(
         blank=False,
         null=False,
+        verbose_name='Name',
     )
     project = models.ForeignKey(
         blank=False,
@@ -14,6 +15,7 @@ class Section(models.Model):
         to=Project,
         on_delete=models.CASCADE,
         related_name='sections',
+        verbose_name='Project',
     )
 
     def __str__(self) -> str:
