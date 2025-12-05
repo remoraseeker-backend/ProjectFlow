@@ -6,11 +6,13 @@ from projects.models import Project
 class Section(models.Model):
     name = models.CharField(
         blank=False,
+        null=False,
     )
     project = models.ForeignKey(
+        blank=False,
+        null=False,
         to=Project,
         on_delete=models.CASCADE,
-        blank=False,
         related_name='sections',
     )
 

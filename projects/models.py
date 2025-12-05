@@ -6,16 +6,18 @@ from authentication.models import User
 class Project(models.Model):
     title = models.CharField(
         blank=False,
+        null=False,
     )
     owner = models.ForeignKey(
+        blank=False,
+        null=False,
         to=User,
         on_delete=models.CASCADE,
-        blank=False,
         related_name='owner_of_projects',
     )
     members = models.ManyToManyField(
-        to=User,
         blank=True,
+        to=User,
         related_name='member_of_projects',
     )
 

@@ -11,7 +11,9 @@ class SectionCreateForm(forms.ModelForm):
 
     class Meta:
         model = Section
-        fields = ['name']
+        fields = (
+            'name',
+        )
 
 
 class SectionUpdateForm(SectionCreateForm):
