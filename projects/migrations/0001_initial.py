@@ -18,9 +18,9 @@ class Migration(migrations.Migration):
             name='Project',
             fields=[
                 ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('title', models.CharField()),
-                ('members', models.ManyToManyField(blank=True, related_name='member_of_projects', to=settings.AUTH_USER_MODEL)),
-                ('owner', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='owner_of_projects', to=settings.AUTH_USER_MODEL)),
+                ('title', models.CharField(verbose_name='Title')),
+                ('members', models.ManyToManyField(blank=True, related_name='member_of_projects', to=settings.AUTH_USER_MODEL, verbose_name='Members')),
+                ('owner', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='owner_of_projects', to=settings.AUTH_USER_MODEL, verbose_name='Owner')),
             ],
         ),
     ]

@@ -31,6 +31,7 @@ class SectionViewMixin(LoginRequiredMixin, View):
     def get_queryset(self) -> QuerySet[Section]:
         queryset = self.model.objects.all()
         queryset = queryset.select_related('project')
+        queryset = queryset.prefetch_related('tasks')
         queryset = queryset.distinct()
         user = self.request.user
         project_pk = self.kwargs[ProjectViewMixin.pk_url_kwarg]
@@ -110,8 +111,8 @@ class SectionDetailView(SectionViewMixin, DetailView):
         context = super().get_context_data(**kwargs)
         user = self.request.user
         context['page_title'] = f'Detail of section: {section.name}'
-        context['can_edit_section'] =  user.is_superuser or (section.project.owner_id == user.id)  # pyright: ignore[reportAttributeAccessIssue] # noqa E501
-        context['can_delete_section'] = user.is_superuser or (section.project.owner_id == user.id)  # pyright: ignore[reportAttributeAccessIssue] # noqa E501
+        context['user_is_admin'] = user.is_superuser
+        context['user_is_project_owner'] = section.project.owner_id == user.id  # pyright: ignore[reportAttributeAccessIssue] # noqa: E501
         return context
 
 

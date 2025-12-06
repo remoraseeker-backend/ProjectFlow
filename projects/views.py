@@ -101,9 +101,8 @@ class ProjectDetailView(ProjectViewMixin, DetailView):
         project = cast(Project, self.object)  # pyright: ignore[reportAttributeAccessIssue]
         context = super().get_context_data(**kwargs)
         context['page_title'] = f'Detail of project: {project.title}'
-        context['can_edit_project'] = user.is_superuser or (project.owner == user)
-        context['can_delete_project'] = user.is_superuser or (project.owner == user)
-        context['can_create_project_section'] = user.is_superuser or (project.owner == user)
+        context['user_is_admin'] = user.is_superuser
+        context['user_is_project_owner'] = project.owner == user
         return context
 
 
