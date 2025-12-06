@@ -1,7 +1,13 @@
 <hr />
 <form method="post">
     {% csrf_token %}
-    {% for field in form %}<div>{{ field.label }}: {{ field }}</div>{% endfor %}
+    {% for field in form %}
+        {% if field.is_hidden %}
+            <div hidden="">{{ field.label }}: {{ field }}</div>
+        {% else %}
+            <div>{{ field.label }}: {{ field }}</div>
+        {% endif %}
+    {% endfor %}
     <hr />
     <input type="submit" value="Save" />
     {% for field, errors in form.errors.items %}

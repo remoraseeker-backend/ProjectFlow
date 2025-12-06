@@ -4,7 +4,21 @@
         Section of project: <a href="{% url "project_detail" project_pk=section.project.pk %}">{{ section.project.title }}</a>
     </p>
     <p>Name: {{ section.name }}</p>
-    <p>Tasks: {{ section.tasks.all }}</p>
+    <p>
+        <a href="{% url "task_list" project_pk=section.project.pk section_pk=section.pk %}">Tasks:</a>
+        {% if user_is_admin or user_is_project_owner or user_is_project_member %}
+            <input type="button"
+                   value="+"
+                   onclick="location.href='{% url "task_create" project_pk=section.project.pk section_pk=section.pk %}'" />
+        {% endif %}
+    </p>
+    <ul>
+        {% for task in section.tasks.all %}
+            <li>
+                <a href="{% url "task_detail" project_pk=section.project.pk section_pk=section.pk task_pk=task.pk %}">{{ task.title }}</a>
+            </li>
+        {% endfor %}
+    </ul>
     {% if user_is_admin or user_is_project_owner %}
         <input type="button"
                value="edit"

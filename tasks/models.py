@@ -4,6 +4,7 @@ from django.db import models
 
 from app_config.validators import datetime_not_past_validator
 from authentication.models import User
+from sections.models import Section
 
 
 class TaskPriority(models.IntegerChoices):
@@ -35,8 +36,9 @@ class Task(models.Model):
         verbose_name='Description',
     )
     priority = models.IntegerField(
-        blank=False,
+        blank=True,
         null=False,
+        default=TaskPriority.LOW,
         choices=TaskPriority.choices,
         verbose_name='Priority',
     )
@@ -68,8 +70,16 @@ class Task(models.Model):
         null=True,
         validators=(
             deadline_cant_be_in_past_validator,
-        )
+        ),
         verbose_name='Deadline',
+    )
+    section = models.ForeignKey(
+        blank=False,
+        null=False,
+        to=Section,
+        on_delete=models.CASCADE,
+        related_name='tasks',
+        verbose_name='Section',
     )
 
     def __str__(self) -> str:

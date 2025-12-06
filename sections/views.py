@@ -30,8 +30,8 @@ class SectionViewMixin(LoginRequiredMixin, View):
 
     def get_queryset(self) -> QuerySet[Section]:
         queryset = self.model.objects.all()
-        queryset = queryset.select_related('project')
-        queryset = queryset.prefetch_related('tasks')
+        queryset = queryset.select_related('project', 'project__owner')
+        queryset = queryset.prefetch_related('tasks', 'project__members')
         queryset = queryset.distinct()
         user = self.request.user
         project_pk = self.kwargs[ProjectViewMixin.pk_url_kwarg]
@@ -44,7 +44,7 @@ class SectionViewMixin(LoginRequiredMixin, View):
             raise Exception()
 
         if user.is_superuser:
-            return queryset
+            return queryset.filter(project__pk=project_pk)
         else:
             return queryset.filter(filters, project__pk=project_pk)
 
@@ -67,7 +67,7 @@ class SectionListView(SectionViewMixin, ListView):
 
 
 class SectionCreateView(SectionViewMixin, CreateView):
-    """User can create an new section for project only if he is a owner of the project or superuser."""
+    """User can create new section for project only if he is a owner of the project or superuser."""
     form_class = SectionCreateForm
     template_name = 'sections/create.html'
 
@@ -75,8 +75,8 @@ class SectionCreateView(SectionViewMixin, CreateView):
         project = ProjectDetailView(request=request, kwargs=kwargs).get_object()
         self.project = cast(Project, project)
 
-        # Raise 404 if user try to add the section into the project where he is not a owner.
         user = request.user
+        # Raise 404 if user try to add the section into the project where he is not a owner.
         if not user.is_superuser and self.project.owner != user:
             raise Http404(f'No {self.project._meta.object_name} matches the given query.')
 
@@ -112,7 +112,8 @@ class SectionDetailView(SectionViewMixin, DetailView):
         user = self.request.user
         context['page_title'] = f'Detail of section: {section.name}'
         context['user_is_admin'] = user.is_superuser
-        context['user_is_project_owner'] = section.project.owner_id == user.id  # pyright: ignore[reportAttributeAccessIssue] # noqa: E501
+        context['user_is_project_owner'] = section.project.owner == user  # pyright: ignore[reportAttributeAccessIssue] # noqa: E501
+        context['user_is_project_member'] = user in section.project.members.all()
         return context
 
 

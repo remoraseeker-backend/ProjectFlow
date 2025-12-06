@@ -9,6 +9,10 @@ from tasks.models import Task
 
 
 class TaskAdminForm(forms.ModelForm):
+    deadline = forms.DateTimeField(
+        required=False,
+        widget=forms.DateTimeInput(attrs={'type': 'datetime-local'})
+    )
     client_timezone_offset = forms.FloatField(
         required=False,
         widget=ClientTimezoneOffsetWidget()
@@ -31,6 +35,9 @@ class TaskAdminForm(forms.ModelForm):
     class Meta:
         model = Task
         fields = '__all__'
+        widgets = {
+            'description': forms.Textarea(attrs={'rows': '2'}),
+        }
 
 
 class TaskAdmin(admin.ModelAdmin):
