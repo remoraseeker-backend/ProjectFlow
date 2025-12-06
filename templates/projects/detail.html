@@ -12,7 +12,7 @@
     {% endif %}
     <p>
         <a href="{% url "section_list" project_pk=project.pk %}">Sections:</a>
-        {% if user_is_project_owner_or_superuser %}
+        {% if can_create_project_section %}
             <input type="button" value="+" onclick="location.href='{% url "section_create" project_pk=project.pk %} '" />
         {% endif %}
     </p>
@@ -23,8 +23,10 @@
             </li>
         {% endfor %}
     </ul>
-    {% if user_is_project_owner_or_superuser %}
+    {% if can_edit_project %}
         <input type="button" value="edit" onclick="location.href='{% url "project_update" project_pk=project.pk %} '" />
+    {% endif %}
+    {% if can_delete_project %}
         <input type="button" value="delete" onclick="location.href='{% url "project_delete" project_pk=project.pk %}'" />
     {% endif %}
 {% endblock content %}

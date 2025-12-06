@@ -110,7 +110,8 @@ class SectionDetailView(SectionViewMixin, DetailView):
         context = super().get_context_data(**kwargs)
         user = self.request.user
         context['page_title'] = f'Detail of section: {section.name}'
-        context['user_is_project_owner_or_superuser'] = section.project.owner_id == user.id or user.is_superuser  # pyright: ignore[reportAttributeAccessIssue] # noqa E501
+        context['can_edit_section'] =  user.is_superuser or (section.project.owner_id == user.id)  # pyright: ignore[reportAttributeAccessIssue] # noqa E501
+        context['can_delete_section'] = user.is_superuser or (section.project.owner_id == user.id)  # pyright: ignore[reportAttributeAccessIssue] # noqa E501
         return context
 
 
