@@ -31,11 +31,12 @@ class TaskViewMixin(LoginRequiredMixin, View):
     def get_queryset(self) -> QuerySet[Task]:
         queryset = self.model.objects.all()
         queryset = queryset.select_related('executor', 'creator', 'section', 'section__project', 'section__project__owner')
+        queryset = queryset.distinct()
         user = self.request.user
         project_pk = self.kwargs[ProjectViewMixin.pk_url_kwarg]
         section_pk = self.kwargs[SectionViewMixin.pk_url_kwarg]
 
-        if isinstance(self, (TaskListView,)):
+        if isinstance(self, (TaskListView, TaskDetailView)):
             filters = Q(section__project__owner=user) | Q(section__project__members=user)
         else:
             raise Exception()
@@ -88,15 +89,27 @@ class TaskCreateView(TaskViewMixin, CreateView):
     def get_success_url(self) -> str:
         task = cast(Task, self.object)  # pyright: ignore[reportAttributeAccessIssue]
         kwargs = {
-            ProjectViewMixin.pk_url_kwarg: self.section.project.pk,
-            SectionViewMixin.pk_url_kwarg: self.section.pk,
+            ProjectViewMixin.pk_url_kwarg: task.section.project.pk,
+            SectionViewMixin.pk_url_kwarg: task.section.pk,
             self.pk_url_kwarg: task.pk
         }
         return reverse_lazy('task_detail', kwargs=kwargs)
 
 
 class TaskDetailView(TaskViewMixin, DetailView):
-    pass
+    context_object_name = 'task'
+    template_name = 'tasks/detail.html'
+
+    def get_context_data(self, **kwargs) -> dict[str, Any]:
+        user = self.request.user
+        task = cast(Task, self.object)  # pyright: ignore[reportAttributeAccessIssue]
+        context = super().get_context_data(**kwargs)
+        context['page_title'] = f'Detail of task: {task.title}'
+        context['user_is_admin'] = user.is_superuser
+        context['user_is_project_owner'] = task.section.project.owner == user
+        context['user_is_task_creator'] = task.creator == user
+        context['user_is_task_executor'] = task.executor == user
+        return context
 
 
 class TaskUpdateView(TaskViewMixin, UpdateView):

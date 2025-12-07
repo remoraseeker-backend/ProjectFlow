@@ -53,6 +53,7 @@ INSTALLED_APPS = [
     'sections.apps.SectionsConfig',
     'projects.apps.ProjectsConfig',
     'authentication.apps.AuthenticationConfig',
+    'app.apps.AppConfig',
     'debug_toolbar',  # Required for debugging the SQL queries.
     'django.contrib.admin',
     'django.contrib.auth',

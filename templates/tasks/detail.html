@@ -1,0 +1,21 @@
+{% extends "template.html" %}
+{% block content %}
+    <p>
+        Task of section: <a href="{% url "section_detail" project_pk=task.section.project.pk section_pk=task.section.pk %}">{{ task.section.name }}</a>
+    </p>
+    <p>Title: {{ task.title }}</p>
+    <p>Description: {{ task.description }}</p>
+    <p>Priority: {{ task.priority }}</p>
+    <p>Status: {{ task.status }}</p>
+    <p>Executor: {{ task.executor.username }}</p>
+    <p>Creator: {{ task.creator.username }}</p>
+    <p>Deadline: {{ task.deadline }}</p>
+    {% if user_is_admin or user_is_project_owner %}
+        <input type="button"
+               value="edit"
+               onclick="location.href='{% url "task_update" project_pk=task.section.project.pk section_pk=task.section.pk task_pk=task.pk %} '" />
+        <input type="button"
+               value="delete"
+               onclick="location.href='{% url "task_delete" project_pk=task.section.project.pk section_pk=task.section.pk task_pk=task.pk %}'" />
+    {% endif %}
+{% endblock content %}

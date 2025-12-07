@@ -112,8 +112,8 @@ class SectionDetailView(SectionViewMixin, DetailView):
         user = self.request.user
         context['page_title'] = f'Detail of section: {section.name}'
         context['user_is_admin'] = user.is_superuser
-        context['user_is_project_owner'] = section.project.owner == user  # pyright: ignore[reportAttributeAccessIssue] # noqa: E501
-        context['user_is_project_member'] = user in section.project.members.all()
+        context['user_is_project_owner'] = section.project.owner == user
+        context['user_is_project_member'] = section.project.members.filter(pk=user.pk).exists()
         return context
 
 
